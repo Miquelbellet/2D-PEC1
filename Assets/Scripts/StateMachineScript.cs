@@ -19,7 +19,6 @@ public class StateMachineScript : MonoBehaviour
         firstPlayer = Random.Range(0, 2);
         if (firstPlayer == 0) playerState = playerStates.Asking;
         else playerState = playerStates.Listening;
-        Debug.Log("firstPlayer: "+firstPlayer);
     }
 
     void Update()

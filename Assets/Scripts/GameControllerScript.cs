@@ -15,6 +15,7 @@ public class GameControllerScript : MonoBehaviour
     private StateMachineScript stateMachine;
     private string question;
     private int waitingResponseTime = 3, pointsPlayer1 = 0, pointsPlayer2 = 0;
+    private bool computerAsked = false;
 
     void Start()
     {
@@ -60,21 +61,49 @@ public class GameControllerScript : MonoBehaviour
     public void AskQuestion(string ask)
     {
         actionText.text = ask;
+        //comprobar si la pregunta es un compliment o una resposta
+        var isCompliment = false;
+        foreach (var comp in listCompliments)
+        {
+            if (comp == ask) isCompliment = true;
+        }
+
+        //si es un compliment que l'ordinador respongui i si es una resposta que conti com a incorrecte
+        if (isCompliment)
+        {
+            question = ask;
+            stateMachine.playerState = StateMachineScript.playerStates.Listening;
+            Invoke("ComputerResponse", waitingResponseTime);
+        }
+        else
+        {
+            stateMachine.playerState = StateMachineScript.playerStates.Incorrect;
+            Invoke("Player2Wins", waitingResponseTime);
+        }
+    }
+    private void AskQuestionComputer()
+    {
+        actionText.text = question;
+        stateMachine.playerState = StateMachineScript.playerStates.Responding;
+    }
+    private void ComputerQuestion(string ask)
+    {
+        computerAsked = true;
+        actionText.text = "Computer turn";
         question = ask;
-        stateMachine.playerState = StateMachineScript.playerStates.Listening;
-        Invoke("ComputerResponse", waitingResponseTime);
+        Invoke("AskQuestionComputer", waitingResponseTime);
     }
     public void ComputerAsking()
     {
-
-    }
-    private void ComputerResponse()
-    {
-        var randomResponse = Random.Range(0, listResponses.Count);
-        CheckResponse(listResponses[randomResponse], "player2");
+        if (!computerAsked)
+        {
+            var randomCompliment = Random.Range(0, listCompliments.Count);
+            ComputerQuestion(listResponses[randomCompliment]);
+        }
     }
     public void CheckResponse(string response, string player)
     {
+        computerAsked = false;
         actionText.text = response;
 
         //Check response if correct or incorrect
@@ -92,6 +121,11 @@ public class GameControllerScript : MonoBehaviour
                 }
             }
         }
+    }
+    private void ComputerResponse()
+    {
+        var randomResponse = Random.Range(0, listResponses.Count);
+        CheckResponse(listResponses[randomResponse], "player2");
     }
     private void CorrectResponse(string player)
     {
