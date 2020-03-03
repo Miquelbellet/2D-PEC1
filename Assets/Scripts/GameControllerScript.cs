@@ -2,19 +2,22 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameControllerScript : MonoBehaviour
 {
-    public GameObject complimentBtnPrefab, parentPrefab;
-    public TextMeshProUGUI actionText, pointsPlayer1Txt, pointsPlayer2Txt;
+    public GameObject complimentBtnPrefab, parentPrefab, panelResponses, scrollBar, panelText;
+    public GameObject[] playerPonitsSprites, computerPonitsSprites;
+    public TextMeshProUGUI actionText;
+    public float waitingResponseTime, initAnimTime, finalAnimTime;
 
     [HideInInspector] public List<string> listCompliments = new List<string>();
     [HideInInspector] public List<string> listResponses = new List<string>();
 
     private StateMachineScript stateMachine;
     private string question;
-    private int waitingResponseTime = 3, pointsPlayer1 = 0, pointsPlayer2 = 0;
+    private int pointsPlayer1 = 0, pointsPlayer2 = 0;
     private bool computerAsked = false;
 
     void Start()
@@ -26,8 +29,7 @@ public class GameControllerScript : MonoBehaviour
     private void InitializeObjects()
     {
         stateMachine = GetComponent<StateMachineScript>();
-        pointsPlayer1Txt.text = pointsPlayer1.ToString();
-        pointsPlayer2Txt.text = pointsPlayer2.ToString();
+        scrollBar.GetComponent<Scrollbar>().value = 1;
     }
     private void SetComplimentsAndResponses()
     {
@@ -60,6 +62,7 @@ public class GameControllerScript : MonoBehaviour
     }
     public void AskQuestion(string ask)
     {
+        actionText.GetComponent<TextMeshProUGUI>().color = new Color32(211, 46, 46, 255);
         actionText.text = ask;
         //comprobar si la pregunta es un compliment o una resposta
         var isCompliment = false;
@@ -72,40 +75,38 @@ public class GameControllerScript : MonoBehaviour
         if (isCompliment)
         {
             question = ask;
-            stateMachine.playerState = StateMachineScript.playerStates.Listening;
+            stateMachine.playerState = StateMachineScript.playerStates.ComputerResponding;
             Invoke("ComputerResponse", waitingResponseTime);
         }
         else
         {
-            stateMachine.playerState = StateMachineScript.playerStates.Incorrect;
+            stateMachine.playerState = StateMachineScript.playerStates.PlayerIncorrect;
             Invoke("Player2Wins", waitingResponseTime);
         }
     }
-    private void AskQuestionComputer()
+    private void ComputerQuestion()
     {
-        actionText.text = question;
-        stateMachine.playerState = StateMachineScript.playerStates.Responding;
-    }
-    private void ComputerQuestion(string ask)
-    {
-        computerAsked = true;
-        actionText.text = "Computer turn";
-        question = ask;
-        Invoke("AskQuestionComputer", waitingResponseTime);
+        computerAsked = false;
+        var randomComp = Random.Range(0, listCompliments.Count);
+        var resp = listCompliments[randomComp];
+        question = resp;
+        actionText.GetComponent<TextMeshProUGUI>().color = new Color32(52, 105, 30, 255);
+        actionText.text = resp;
+        stateMachine.playerState = StateMachineScript.playerStates.PlayerResponding;
     }
     public void ComputerAsking()
     {
         if (!computerAsked)
         {
-            var randomCompliment = Random.Range(0, listCompliments.Count);
-            ComputerQuestion(listResponses[randomCompliment]);
+            computerAsked = true;
+            Invoke("ComputerQuestion", waitingResponseTime);
         }
     }
     public void CheckResponse(string response, string player)
     {
-        computerAsked = false;
+        if(player == "player1") actionText.GetComponent<TextMeshProUGUI>().color = new Color32(211, 46, 46, 255);
+        else actionText.GetComponent<TextMeshProUGUI>().color = new Color32(52, 105, 30, 255);
         actionText.text = response;
-
         //Check response if correct or incorrect
         for (var i=0;i<listCompliments.Count;i++)
         {
@@ -131,7 +132,7 @@ public class GameControllerScript : MonoBehaviour
     {
         if (player == "player1")
         {
-            stateMachine.playerState = StateMachineScript.playerStates.Correct;
+            stateMachine.playerState = StateMachineScript.playerStates.PlayerCorrect;
             Invoke("Player1Wins", waitingResponseTime);
         }
         else if (player == "player2")
@@ -144,7 +145,7 @@ public class GameControllerScript : MonoBehaviour
     {
         if (player == "player1")
         {
-            stateMachine.playerState = StateMachineScript.playerStates.Incorrect;
+            stateMachine.playerState = StateMachineScript.playerStates.PlayerIncorrect;
             Invoke("Player2Wins", waitingResponseTime);
         }
         else if (player == "player2")
@@ -156,15 +157,43 @@ public class GameControllerScript : MonoBehaviour
     private void Player1Wins()
     {
         pointsPlayer1++;
-        pointsPlayer1Txt.text = pointsPlayer1.ToString();
+        actionText.GetComponent<TextMeshProUGUI>().color = new Color32(255, 255, 255, 255);
         actionText.text = "Your turn";
-        stateMachine.playerState = StateMachineScript.playerStates.Asking;
+        stateMachine.playerState = StateMachineScript.playerStates.PlayerAsking;
+        if(pointsPlayer1 >= 3) Invoke("GameOverP1Wins", 2f);
+        foreach (var point in playerPonitsSprites)
+        {
+            if (!point.activeSelf)
+            {
+                point.SetActive(true);
+                return;
+            }
+        }
     }
     private void Player2Wins()
     {
         pointsPlayer2++;
-        pointsPlayer2Txt.text = pointsPlayer2.ToString();
+        actionText.GetComponent<TextMeshProUGUI>().color = new Color32(255, 255, 255, 255);
         actionText.text = "Player2 turn";
-        stateMachine.playerState = StateMachineScript.playerStates.Listening;
+        stateMachine.playerState = StateMachineScript.playerStates.ComputerAsking;
+        if(pointsPlayer2 >= 3) Invoke("GameOverP2Wins", 2f);
+        foreach (var point in computerPonitsSprites)
+        {
+            if (!point.activeSelf)
+            {
+                point.SetActive(true);
+                return;
+            }
+        }
+    }
+    private void GameOverP1Wins()
+    {
+        PlayerPrefs.SetString("Winner", "Player");
+        SceneManager.LoadScene("EndScene");
+    }
+    private void GameOverP2Wins()
+    {
+        PlayerPrefs.SetString("Winner", "Computer");
+        SceneManager.LoadScene("EndScene");
     }
 }

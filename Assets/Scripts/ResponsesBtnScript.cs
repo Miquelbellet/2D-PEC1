@@ -13,21 +13,15 @@ public class ResponsesBtnScript : MonoBehaviour
         stateController = GameObject.FindWithTag("GameController").GetComponent<StateMachineScript>();
     }
 
-    void Update()
-    {
-        
-    }
-
     public void PlayerResponse(Text text)
     {
-        if (stateController.playerState == StateMachineScript.playerStates.Responding)
+        if (stateController.playerState == StateMachineScript.playerStates.PlayerResponding)
         {
             gameController.CheckResponse(text.text, "player1");
         }
-        else if (stateController.playerState == StateMachineScript.playerStates.Asking)
+        else if (stateController.playerState == StateMachineScript.playerStates.PlayerAsking)
         {
             gameController.AskQuestion(text.text);
         }
-        
     }
 }
