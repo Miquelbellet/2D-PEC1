@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class StateMachineScript : MonoBehaviour
 {
+    //Todos los estados posibles de la maquina de estados
     [HideInInspector] public enum playerStates { Waiting, PlayerAsking, ComputerResponding, ComputerAsking, PlayerResponding, PlayerCorrect, PlayerIncorrect, ComputerCorrect, ComputerInorrect };
     [HideInInspector] public playerStates playerState;
 
@@ -14,22 +15,22 @@ public class StateMachineScript : MonoBehaviour
 
     void Start()
     {
-        gameController = GetComponent<GameControllerScript>();
-        gameController.panelResponses.SetActive(false);
-        //To know who starts first, 0 starts player1 and 1 starts player2
+        //Aqui se inicializan tadas las varibales i se activan o desactivan los elementos necessarios en la escena
+        initVariables();
+        //Para saber quin empieza primero un integer random, '0' empieza player1 y '1' empieza player2
         firstPlayer = Random.Range(0, 2);
         if (firstPlayer == 0) playerState = playerStates.PlayerAsking;
         else
         {
             gameController.actionText.gameObject.SetActive(false);
-            gameController.panelText.SetActive(false);
-            gameController.actionText.text = "Player2 turn ";
+            gameController.actionText.text = "Player2 turn";
             playerState = playerStates.ComputerAsking;
         }
     }
 
     void Update()
     {
+        //Mientras se esté ejecutando la animación inicial, no entrar en la máquina de estados
         time += Time.deltaTime;
         if (time >= gameController.initAnimTime)
         {
@@ -39,8 +40,15 @@ public class StateMachineScript : MonoBehaviour
         }
     }
 
+    private void initVariables()
+    {
+        gameController = GetComponent<GameControllerScript>();
+        gameController.panelResponses.SetActive(false);
+        gameController.panelText.SetActive(false);
+    }
     private void StateMachine()
     {
+        //Mientras el jugador no tiene que enviar una pregunta o respuesta, que no se enseñe el panel con las preguntas y respuestas
         if (playerState == playerStates.PlayerAsking || playerState == playerStates.PlayerResponding) gameController.panelResponses.SetActive(true);
         else gameController.panelResponses.SetActive(false);
 

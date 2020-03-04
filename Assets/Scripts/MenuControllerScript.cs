@@ -5,23 +5,15 @@ using UnityEngine.SceneManagement;
 
 public class MenuControllerScript : MonoBehaviour
 {
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        
-    }
-
     public void GoToGame()
     {
+        //Ir al juego
         SceneManager.LoadScene("GameScene");
     }
 
     public void Exit()
     {
+        //Salir del juego
         Application.Quit();
     }
 }
